@@ -8,20 +8,26 @@ export function PagePlaceholder({
   description,
 }: PagePlaceholderProps) {
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10">
-      <div className="mx-auto max-w-5xl">
+    <section>
+      <div className="mb-8">
         <p className="text-sm font-medium text-indigo-600">
           Personal Finance Hub
         </p>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
           {title}
         </h1>
 
-        <p className="mt-3 text-slate-500">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
           {description}
         </p>
       </div>
-    </main>
+
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <p className="text-sm text-slate-500">
+          This module is ready for development.
+        </p>
+      </div>
+    </section>
   )
 }

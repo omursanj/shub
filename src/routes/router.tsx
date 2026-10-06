@@ -1,55 +1,63 @@
 import { createBrowserRouter } from 'react-router'
 
-import { HomePage } from '../pages/HomePage'
-import { TransactionsPage } from '../pages/TransactionsPage'
-import { BudgetsPage } from '../pages/BudgetsPage'
+import { AppLayout } from '../components/layout/AppLayout'
+
 import { AnalyticsPage } from '../pages/AnalyticsPage'
-import { PlannedPage } from '../pages/PlannedPage'
-import { SubscriptionsPage } from '../pages/SubscriptionsPage'
-import { GoalsPage } from '../pages/GoalsPage'
+import { BudgetsPage } from '../pages/BudgetsPage'
 import { DebtsPage } from '../pages/DebtsPage'
-import { SettingsPage } from '../pages/SettingsPage'
+import { GoalsPage } from '../pages/GoalsPage'
+import { HomePage } from '../pages/HomePage'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { PlannedPage } from '../pages/PlannedPage'
+import { SettingsPage } from '../pages/SettingsPage'
+import { SubscriptionsPage } from '../pages/SubscriptionsPage'
+import { TransactionsPage } from '../pages/TransactionsPage'
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
-  },
-  {
-    path: '/transactions',
-    element: <TransactionsPage />,
-  },
-  {
-    path: '/budgets',
-    element: <BudgetsPage />,
-  },
-  {
-    path: '/analytics',
-    element: <AnalyticsPage />,
-  },
-  {
-    path: '/planned',
-    element: <PlannedPage />,
-  },
-  {
-    path: '/subscriptions',
-    element: <SubscriptionsPage />,
-  },
-  {
-    path: '/goals',
-    element: <GoalsPage />,
-  },
-  {
-    path: '/debts',
-    element: <DebtsPage />,
-  },
-  {
-    path: '/settings',
-    element: <SettingsPage />,
+    Component: AppLayout,
+    children: [
+      {
+        index: true,
+        Component: HomePage,
+      },
+      {
+        path: 'transactions',
+        Component: TransactionsPage,
+      },
+      {
+        path: 'budgets',
+        Component: BudgetsPage,
+      },
+      {
+        path: 'analytics',
+        Component: AnalyticsPage,
+      },
+      {
+        path: 'planned',
+        Component: PlannedPage,
+      },
+      {
+        path: 'subscriptions',
+        Component: SubscriptionsPage,
+      },
+      {
+        path: 'goals',
+        Component: GoalsPage,
+      },
+      {
+        path: 'debts',
+        Component: DebtsPage,
+      },
+      {
+        path: 'settings',
+        Component: SettingsPage,
+      },
+    ],
   },
   {
     path: '*',
-    element: <NotFoundPage />,
+    Component: NotFoundPage,
   },
 ])
