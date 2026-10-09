@@ -1,219 +1,271 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
+import { ArrowDownLeft, ArrowUpRight, Loader2, Plus } from 'lucide-react'
 
-import {
-  transactionSchema,
-  type TransactionFormValues,
-} from './transaction.schema'
+import type {
+  Category,
+  CreateTransactionInput,
+} from './transaction.service'
 
 type QuickAddTransactionProps = {
-  onAdd: (transaction: TransactionFormValues) => void
-}
-
-const categories = [
-  'Food',
-  'Housing',
-  'Transport',
-  'Health',
-  'Sport',
-  'Entertainment',
-  'Education',
-  'Shopping',
-  'Subscriptions',
-  'Travel',
-  'Children / Family',
-  'Gifts',
-  'Other',
-]
-
-function getToday() {
-  return new Date().toISOString().slice(0, 10)
+  categories: Category[]
+  onCreate: (input: CreateTransactionInput) => Promise<void>
+  isSubmitting?: boolean
 }
 
 export function QuickAddTransaction({
-  onAdd,
+  categories,
+  onCreate,
+  isSubmitting = false,
 }: QuickAddTransactionProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: {
-      errors,
-      isSubmitting,
-    },
-  } = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionSchema),
-    defaultValues: {
-      type: 'expense',
-      amount: undefined,
-      category: '',
-      date: getToday(),
-    },
-  })
+  const today = useMemo(
+    () => new Date().toISOString().slice(0, 10),
+    [],
+  )
 
-  function onSubmit(values: TransactionFormValues) {
-    onAdd(values)
+  const [type, setType] = useState<'expense' | 'income'>('expense')
+  const [amount, setAmount] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [date, setDate] = useState(today)
+  const [storeName, setStoreName] = useState('')
+  const [note, setNote] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
-    reset({
-      type: 'expense',
-      amount: undefined,
-      category: '',
-      date: getToday(),
-    })
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+
+    setErrorMessage('')
+
+    const parsedAmount = Number(amount.replace(',', '.'))
+
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setErrorMessage('Enter a valid amount.')
+      return
+    }
+
+    try {
+      await onCreate({
+        type,
+        amount: parsedAmount,
+        categoryId: categoryId || null,
+        currencyCode: 'KZT',
+        exchangeRate: 1,
+        date,
+        storeName: storeName.trim() || undefined,
+        note: note.trim() || undefined,
+      })
+
+      setAmount('')
+      setStoreName('')
+      setNote('')
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Could not add transaction.',
+      )
+    }
   }
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="mb-6">
-        <p className="text-sm font-medium text-indigo-600">
-          Quick add
-        </p>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
+          <Plus size={20} />
+        </div>
 
-        <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
-          Add transaction
-        </h2>
+        <div>
+          <h2 className="font-semibold text-slate-950">
+            Quick add
+          </h2>
 
-        <p className="mt-1 text-sm text-slate-500">
-          Record an expense or income in a few seconds.
-        </p>
+          <p className="text-sm text-slate-500">
+            Record income or expense
+          </p>
+        </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-5"
-      >
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Type
-          </label>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setType('expense')}
+            className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+              type === 'expense'
+                ? 'bg-white text-slate-950 shadow-sm'
+                : 'text-slate-500 hover:text-slate-950'
+            }`}
+          >
+            <ArrowUpRight size={17} />
+            Expense
+          </button>
 
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
-            <label className="cursor-pointer">
-              <input
-                type="radio"
-                value="expense"
-                {...register('type')}
-                className="peer sr-only"
-              />
-
-              <div className="rounded-xl px-4 py-2.5 text-center text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-slate-950 peer-checked:shadow-sm">
-                Expense
-              </div>
-            </label>
-
-            <label className="cursor-pointer">
-              <input
-                type="radio"
-                value="income"
-                {...register('type')}
-                className="peer sr-only"
-              />
-
-              <div className="rounded-xl px-4 py-2.5 text-center text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-slate-950 peer-checked:shadow-sm">
-                Income
-              </div>
-            </label>
-          </div>
+          <button
+            type="button"
+            onClick={() => setType('income')}
+            className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+              type === 'income'
+                ? 'bg-white text-slate-950 shadow-sm'
+                : 'text-slate-500 hover:text-slate-950'
+            }`}
+          >
+            <ArrowDownLeft size={17} />
+            Income
+          </button>
         </div>
 
-        <div>
-          <label
-            htmlFor="amount"
-            className="mb-2 block text-sm font-medium text-slate-700"
-          >
-            Amount
-          </label>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="transaction-amount"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Amount
+            </label>
 
-          <div className="relative">
+            <div className="relative">
+              <input
+                id="transaction-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(event) =>
+                  setAmount(event.target.value)
+                }
+                placeholder="0"
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 pr-14 text-lg font-semibold text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+              />
+
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
+                ₸
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="transaction-category"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Category
+            </label>
+
+            <select
+              id="transaction-category"
+              value={categoryId}
+              onChange={(event) =>
+                setCategoryId(event.target.value)
+              }
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+            >
+              <option value="">No category</option>
+
+              {categories.map((category) => (
+                <option
+                  key={category.id}
+                  value={category.id}
+                >
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="transaction-date"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Date
+            </label>
+
             <input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0"
-              {...register('amount', {
-                valueAsNumber: true,
-              })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-lg font-semibold text-slate-950 outline-none transition placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
+              id="transaction-date"
+              type="date"
+              required
+              value={date}
+              onChange={(event) =>
+                setDate(event.target.value)
+              }
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
             />
-
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
-              ₸
-            </span>
           </div>
 
-          {errors.amount && (
-            <p className="mt-2 text-xs font-medium text-rose-600">
-              {errors.amount.message}
-            </p>
-          )}
-        </div>
+          <div>
+            <label
+              htmlFor="transaction-store"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Store / source
+            </label>
 
-        <div>
-          <label
-            htmlFor="category"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            <input
+              id="transaction-store"
+              type="text"
+              value={storeName}
+              onChange={(event) =>
+                setStoreName(event.target.value)
+              }
+              placeholder={
+                type === 'expense'
+                  ? 'Magnum, Kaspi, Cafe...'
+                  : 'Salary, client...'
+              }
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="transaction-note"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Note
+            </label>
+
+            <textarea
+              id="transaction-note"
+              rows={3}
+              value={note}
+              onChange={(event) =>
+                setNote(event.target.value)
+              }
+              placeholder="Optional note"
+              className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+            />
+          </div>
+
+          {errorMessage ? (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Category
-          </label>
-
-          <select
-            id="category"
-            {...register('category')}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
-          >
-            <option value="">
-              Select category
-            </option>
-
-            {categories.map((category) => (
-              <option
-                key={category}
-                value={category}
-              >
-                {category}
-              </option>
-            ))}
-          </select>
-
-          {errors.category && (
-            <p className="mt-2 text-xs font-medium text-rose-600">
-              {errors.category.message}
-            </p>
-          )}
+            {isSubmitting ? (
+              <>
+                <Loader2
+                  size={17}
+                  className="animate-spin"
+                />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Plus size={17} />
+                Add transaction
+              </>
+            )}
+          </button>
         </div>
-
-        <div>
-          <label
-            htmlFor="date"
-            className="mb-2 block text-sm font-medium text-slate-700"
-          >
-            Date
-          </label>
-
-          <input
-            id="date"
-            type="date"
-            {...register('date')}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
-          />
-
-          {errors.date && (
-            <p className="mt-2 text-xs font-medium text-rose-600">
-              {errors.date.message}
-            </p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Plus size={18} />
-          Add transaction
-        </button>
       </form>
     </section>
   )
